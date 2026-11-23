@@ -1,0 +1,121 @@
+=====================================================================================
+ACTIVITY 5: CLOUD-BASED BIG DATA ANALYTICS (AWS S3 + ATHENA / GLUE)
+=====================================================================================
+Database: cloud_log_lake
+Table: s3_web_server_logs (Partitioned by log_date, hour_of_day)
+Storage Location: s3://cloud-ops-telemetry-bucket-prod/logs/web_server/
+Query Engine: Amazon Athena (Presto / Trino Serverless SQL)
+-------------------------------------------------------------------------------------
+
+Total Requests Processed: 15000
+Total Errors (4xx & 5xx): 2945 (19.63% Error Rate)
+
+--- [ATHENA QUERY 1: HTTP Status Code Distribution & Reliability] ---
+SELECT status_category, status_code, COUNT(*) AS request_count,
+       ROUND((COUNT(*) * 100.0 / SUM(COUNT(*)) OVER ()), 2) AS pct_of_traffic,
+       ROUND(AVG(latency_ms), 1) AS avg_latency_ms
+FROM s3_web_server_logs
+GROUP BY status_category, status_code
+ORDER BY status_category, request_count DESC;
+Category   Status Code    Requests     Traffic Share    Avg Latency (ms)  
+--------------------------------------------------------------------------
+2xx        200            8644         57.63          % 326.3            
+2xx        201            800          5.33           % 78.9             
+3xx        304            2611         17.41          % 24.4             
+4xx        404            1037         6.91           % 37.5             
+4xx        403            548          3.65           % 38.7             
+4xx        401            451          3.01           % 73.3             
+4xx        400            302          2.01           % 625.1            
+4xx        429            52           0.35           % 106.8            
+5xx        500            233          1.55           % 3149.5           
+5xx        504            165          1.10           % 2777.5           
+5xx        502            157          1.05           % 3255.7           
+Athena Run Time: 0.84 seconds | Data Scanned: 1.12 MB
+
+--- [ATHENA QUERY 2: Hourly Request Volume & Failure Spike Detection] ---
+SELECT hour_of_day, COUNT(*) AS total_requests,
+       SUM(CASE WHEN is_error = 1 THEN 1 ELSE 0 END) AS failed_requests,
+       ROUND(SUM(CASE WHEN is_error = 1 THEN 1.0 ELSE 0.0 END) * 100.0 / COUNT(*), 2) AS error_rate_pct,
+       ROUND(AVG(latency_ms), 1) AS avg_latency_ms
+FROM s3_web_server_logs
+GROUP BY hour_of_day
+ORDER BY hour_of_day ASC;
+Hour   Total Requests   Failed Requests    Error Rate (%)   Avg Latency (ms)   Incident Flag  
+----------------------------------------------------------------------------------------------
+00:00  157.0            27.0               17.20          % 300.9             NORMAL         
+01:00  155.0            21.0               13.55          % 241.3             NORMAL         
+02:00  134.0            32.0               23.88          % 280.2             WARNING SPIKE  
+03:00  159.0            23.0               14.47          % 290.2             NORMAL         
+04:00  146.0            23.0               15.75          % 206.3             NORMAL         
+05:00  268.0            47.0               17.54          % 237.6             NORMAL         
+06:00  420.0            66.0               15.71          % 259.5             NORMAL         
+07:00  761.0            141.0              18.53          % 214.4             NORMAL         
+08:00  984.0            176.0              17.89          % 265.0             NORMAL         
+09:00  1141.0           206.0              18.05          % 279.2             NORMAL         
+10:00  1162.0           222.0              19.10          % 281.8             NORMAL         
+11:00  1341.0           262.0              19.54          % 261.4             NORMAL         
+12:00  1068.0           197.0              18.45          % 243.5             NORMAL         
+13:00  1002.0           162.0              16.17          % 264.1             NORMAL         
+14:00  1724.0           431.0              25.00          % 557.8             WARNING SPIKE  
+15:00  1635.0           429.0              26.24          % 585.8             WARNING SPIKE  
+16:00  823.0            151.0              18.35          % 280.0             NORMAL         
+17:00  591.0            98.0               16.58          % 243.4             NORMAL         
+18:00  456.0            74.0               16.23          % 264.0             NORMAL         
+19:00  288.0            57.0               19.79          % 266.9             NORMAL         
+20:00  135.0            22.0               16.30          % 182.8             NORMAL         
+21:00  158.0            30.0               18.99          % 273.8             NORMAL         
+22:00  147.0            20.0               13.61          % 242.8             NORMAL         
+23:00  145.0            28.0               19.31          % 186.1             NORMAL         
+Athena Run Time: 0.72 seconds | Data Scanned: 0.95 MB
+
+--- [ATHENA QUERY 3: Endpoint Reliability & Latency Degradation] ---
+SELECT uri_path, http_method, COUNT(*) AS total_calls,
+       SUM(CASE WHEN status_code >= 500 THEN 1 ELSE 0 END) AS server_errors_5xx,
+       SUM(CASE WHEN status_code BETWEEN 400 AND 499 THEN 1 ELSE 0 END) AS client_errors_4xx,
+       ROUND(AVG(latency_ms), 1) AS avg_latency_ms,
+       ROUND(APPROX_PERCENTILE(latency_ms, 0.95), 1) AS p95_latency_ms
+FROM s3_web_server_logs
+GROUP BY uri_path, http_method
+ORDER BY server_errors_5xx DESC, total_calls DESC;
+Endpoint URI                 Method   Calls    5xx Errs   4xx Errs   Avg (ms)   P95 (ms)  
+------------------------------------------------------------------------------------------
+/api/v1/checkout/pay         POST     1650     499        84         2338.5    5520.8   
+/api/v1/products/search      GET      1656     36         127        257.8     430.0    
+/api/v1/products             GET      1648     20         0          65.4      106.0    
+/admin/db/metrics            GET      1749     0          1749       37.5      58.0     
+/api/v1/cart/items           POST     1612     0          91         77.6      116.0    
+/api/v1/auth/login           POST     1605     0          240        111.0     174.0    
+/api/v1/user/profile         GET      1676     0          99         60.0      92.0     
+/static/assets/app.js        GET      1691     0          0          25.1      39.0     
+/static/assets/theme.css     GET      1713     0          0          19.3      29.0     
+Athena Run Time: 0.91 seconds | Data Scanned: 1.25 MB
+
+=====================================================================================
+ESTIMATED CLOUD INFRASTRUCTURE RESOURCE & COST MODEL
+=====================================================================================
+Workload Assumptions: 100 GB daily compressed server logs (3 TB / month), 500 Athena analytical queries / month
+-------------------------------------------------------------------------------------
+1. Storage (Amazon S3 Standard Tier):
+   - Raw Storage: 3,000 GB * $0.023 / GB = $69.00 / month
+   - After Parquet Columnar Compression (75% reduction): 750 GB * $0.023 = $17.25 / month
+   - S3 Lifecycle Rule to Glacier Flexible Retrieval after 90 days: $0.0036 / GB
+
+2. Metadata Cataloging (AWS Glue Data Catalog):
+   - Glue Crawler runs 1x daily (0.5 DPU-hours/day = 15 DPU-hours/mo) * $0.44/DPU-hour = $6.60 / month
+   - Glue Data Catalog Storage: First 1 million objects are FREE ($0.00)
+
+3. Serverless Analytics (Amazon Athena Engine):
+   - Pricing: $5.00 per 1 TB scanned
+   - On Raw CSV: 500 queries * 50 GB avg scan = 25 TB scanned = $125.00 / month
+   - On Partitioned Parquet (Column pruning + Snappy compression = 90% scan reduction):
+     500 queries * 5 GB avg scan = 2.5 TB scanned = $12.50 / month
+
+4. Total Monthly Serverless Cloud Cost (Optimized Parquet):
+   $17.25 (S3) + $6.60 (Glue) + $12.50 (Athena) = $36.35 / MONTH
+
+5. Comparison with Traditional Self-Hosted EC2 Cluster:
+   - 3x r5.xlarge worker nodes (32 GB RAM, 4 vCPU) = 3 * $0.252/hr * 730 hrs = $551.88 / month
+   - EBS Storage Volumes (3 TB gp3) = $240.00 / month
+   - Total Self-Hosted Cluster Cost = ~$791.88 / MONTH
+   >>> CONCLUSION: Serverless Cloud Architecture yields a 95.4% COST REDUCTION with ZERO server maintenance!
+=====================================================================================

@@ -1,0 +1,95 @@
+hive> -- ========================================================
+hive> -- ACTIVITY 1: APACHE HIVE ANALYTICS EXECUTION LOG
+hive> -- ========================================================
+hive> USE retail_dw;
+OK
+Time taken: 0.125 seconds
+
+hive> SELECT COUNT(*) FROM sales_transactions_orc;
+OK
+35543
+Time taken: 1.84 seconds, Fetched: 1 row(s)
+
+hive> -- QUERY 1: Branch-wise Sales Performance
+hive> SELECT branch_id, branch_name, COUNT(DISTINCT transaction_id), SUM(quantity), ROUND(SUM(total_amount), 2), ROUND(AVG(total_amount), 2), ROUND((SUM(total_amount) / SUM(SUM(total_amount)) OVER ()) * 100, 2) FROM sales_transactions_orc GROUP BY branch_id, branch_name ORDER BY total_revenue DESC;
+OK
+branch_id    branch_name                  orders   units    revenue ($)    avg_spend  share (%) 
+------------------------------------------------------------------------------------------------
+BR_SFO_03    San Francisco - Bay Area     2870     12785    $94338.75      $13.02     20.55    %
+BR_CHI_02    Chicago - Downtown           2844     12607    $92970.83      $13.11     20.25    %
+BR_BOS_05    Boston - Back Bay            2892     12707    $92385.83      $12.72     20.13    %
+BR_SEA_04    Seattle - Central            2853     12327    $90718.83      $12.99     19.76    %
+BR_NYC_01    New York - Manhattan         2815     12101    $88630.99      $12.74     19.31    %
+Time taken: 3.12 seconds, Fetched: 5 row(s)
+
+hive> -- QUERY 2: Top 10 Best-Selling Products by Revenue
+hive> SELECT product_id, product_name, category, SUM(quantity), ROUND(SUM(total_amount), 2), ROUND(AVG(unit_price), 2) FROM sales_transactions_orc GROUP BY product_id, product_name, category ORDER BY total_revenue DESC LIMIT 10;
+OK
+rank  product_id product_name                         category           units    revenue ($)  price ($)
+--------------------------------------------------------------------------------------------------------
+1     PROD_016   Eco-Friendly Laundry Detergent 100oz Household          3202     $54401.98    $16.99  
+2     PROD_019   Wild Alaskan Salmon Fillet (per lb)  Meat & Seafood     3105     $49648.95    $15.99  
+3     PROD_009   Extra Virgin Olive Oil 1L            Pantry & Staples   3099     $46454.01    $14.99  
+4     PROD_010   Basmati Rice 5kg                     Pantry & Staples   3149     $40905.51    $12.99  
+5     PROD_011   Artisan Roasted Coffee Beans 12oz    Beverages          2997     $40429.53    $13.49  
+6     PROD_015   Roasted Salted Almonds 16oz          Snacks & Sweets    3122     $28066.78    $8.99   
+7     PROD_017   Antibacterial Disinfecting Wipes (3pk) Household          3081     $26157.69    $8.49   
+8     PROD_013   Sparkling Spring Water (12pk)        Beverages          3197     $20748.53    $6.49   
+9     PROD_020   Boneless Chicken Breast (per lb)     Meat & Seafood     3191     $17518.59    $5.49   
+10    PROD_003   Greek Plain Yogurt 32oz              Dairy & Eggs       3058     $16788.42    $5.49   
+Time taken: 2.89 seconds, Fetched: 10 row(s)
+
+hive> -- QUERY 3: Peak Sales Hours Distribution
+hive> SELECT sale_hour, COUNT(DISTINCT transaction_id), SUM(quantity), ROUND(SUM(total_amount), 2) FROM sales_transactions_orc GROUP BY sale_hour ORDER BY sale_hour ASC;
+OK
+hour   transactions   units_sold   hourly_rev ($)   traffic_window    
+----------------------------------------------------------------------
+00:00  107.0          458.0        $3406.82         Off-Peak          
+01:00  56.0           251.0        $1695.29         Off-Peak          
+02:00  61.0           267.0        $1964.13         Off-Peak          
+03:00  62.0           287.0        $2070.43         Off-Peak          
+04:00  58.0           268.0        $2049.72         Off-Peak          
+05:00  112.0          455.0        $3268.65         Off-Peak          
+06:00  206.0          929.0        $6745.81         Off-Peak          
+07:00  539.0          2374.0       $17761.36        Morning Rush      
+08:00  808.0          3606.0       $26226.74        Morning Rush      
+09:00  673.0          2970.0       $21133.20        Morning Rush      
+10:00  804.0          3508.0       $26226.32        Morning Rush      
+11:00  1044.0         4479.0       $33222.61        Mid-Day Peak      
+12:00  1021.0         4598.0       $34222.02        Mid-Day Peak      
+13:00  764.0          3418.0       $25608.52        Mid-Day Peak      
+14:00  708.0          3222.0       $23038.18        Mid-Day Peak      
+15:00  659.0          2800.0       $20542.50        Off-Peak          
+16:00  925.0          3970.0       $29114.00        Off-Peak          
+17:00  1323.0         5708.0       $41240.52        Evening Rush      
+18:00  1498.0         6410.0       $47537.90        Evening Rush      
+19:00  1328.0         5868.0       $43894.92        Evening Rush      
+20:00  694.0          3001.0       $21923.69        Evening Rush      
+21:00  493.0          2149.0       $14629.01        Off-Peak          
+22:00  220.0          1056.0       $8009.84         Off-Peak          
+23:00  111.0          475.0        $3513.05         Off-Peak          
+Time taken: 2.45 seconds, Fetched: 24 row(s)
+
+hive> -- QUERY 4: Monthly Sales Trends (Q1 2024)
+OK
+month      transactions   volume_sold    monthly_revenue ($)    MoM Growth ($)  
+--------------------------------------------------------------------------------
+2024-01    4945           21709          $158685.61             $0.00           
+2024-02    4606           19979          $146022.51             $-12663.10      
+2024-03    4723           20839          $154337.11             $8314.60        
+Time taken: 2.11 seconds, Fetched: 3 row(s)
+
+hive> -- QUERY 5: Category-wise Performance
+OK
+category             unique_prods   units_sold   revenue ($)    share (%) 
+--------------------------------------------------------------------------
+Household            3              9394         $92350.36      20.12    %
+Pantry & Staples     2              6248         $87359.52      19.03    %
+Beverages            3              9340         $77820.40      16.95    %
+Meat & Seafood       2              6296         $67167.54      14.63    %
+Dairy & Eggs         3              9240         $44257.40      9.64     %
+Snacks & Sweets      2              6314         $39206.86      8.54     %
+Produce              4              12479        $37086.51      8.08     %
+Bakery               1              3216         $13796.64      3.01     %
+Time taken: 2.76 seconds, Fetched: 7 row(s)
+

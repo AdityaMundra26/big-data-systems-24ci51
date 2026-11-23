@@ -1,0 +1,15 @@
+{
+  "collscan": {
+    "stage": "COLLSCAN",
+    "nReturned": 484,
+    "totalDocsExamined": 5004,
+    "executionTimeMillis": 0.26
+  },
+  "ixscan": {
+    "stage": "IXSCAN -> FETCH",
+    "indexName": "idx_cat_price_desc",
+    "nReturned": 484,
+    "totalDocsExamined": 484,
+    "executionTimeMillis": 0.062
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "total_telemetry": 35,
+  "alerts": [
+    {
+      "alert_id": "ALT_JN_02_1795463191730",
+      "junction_id": "JN_02",
+      "junction_name": "Tech Corridor Outer Ring",
+      "alert_level": "WARNING",
+      "speed_kmh": 27.3,
+      "vehicle_count": 66,
+      "occupancy_pct": 63.9,
+      "action": "Pre-empt Upstream Signals | Update Municipal Navigation Feeds"
+    },
+    {
+      "alert_id": "ALT_JN_04_1795463191952",
+      "junction_id": "JN_04",
+      "junction_name": "Harbor Industrial Boulevard",
+      "alert_level": "CRITICAL",
+      "speed_kmh": 15.1,
+      "vehicle_count": 87,
+      "occupancy_pct": 96.4,
+      "action": "Adaptive Signal Extension (+45s) | Dispatch Traffic Patrol | VMS Broadcast"
+    },
+    {
+      "alert_id": "ALT_JN_05_1795463192046",
+      "junction_id": "JN_05",
+      "junction_name": "University South Gate",
+      "alert_level": "CRITICAL",
+      "speed_kmh": 11.9,
+      "vehicle_count": 127,
+      "occupancy_pct": 86.6,
+      "action": "Adaptive Signal Extension (+45s) | Dispatch Traffic Patrol | VMS Broadcast"
+    },
+    {
+      "alert_id": "ALT_JN_02_1795463192313",
+      "junction_id": "JN_02",
+      "junction_name": "Tech Corridor Outer Ring",
+      "alert_level": "WARNING",
+      "speed_kmh": 23.6,
+      "vehicle_count": 75,
+      "occupancy_pct": 70.8,
+      "action": "Pre-empt Upstream Signals | Update Municipal Navigation Feeds"
+    },
+    {
+      "alert_id": "ALT_JN_02_1795463192621",
+      "junction_id": "JN_02",
+      "junction_name": "Tech Corridor Outer Ring",
+      "alert_level": "CRITICAL",
+      "speed_kmh": 16.6,
+      "vehicle_count": 115,
+      "occupancy_pct": 88.9,
+      "action": "Adaptive Signal Extension (+45s) | Dispatch Traffic Patrol | VMS Broadcast"
+    },
+    {
+      "alert_id": "ALT_JN_05_1795463192682",
+      "junction_id": "JN_05",
+      "junction_name": "University South Gate",
+      "alert_level": "CRITICAL",
+      "speed_kmh": 14.5,
+      "vehicle_count": 115,
+      "occupancy_pct": 83.2,
+      "action": "Adaptive Signal Extension (+45s) | Dispatch Traffic Patrol | VMS Broadcast"
+    },
+    {
+      "alert_id": "ALT_JN_05_1795463193051",
+      "junction_id": "JN_05",
+      "junction_name": "University South Gate",
+      "alert_level": "WARNING",
+      "speed_kmh": 25.1,
+      "vehicle_count": 65,
+      "occupancy_pct": 63.7,
+      "action": "Pre-empt Upstream Signals | Update Municipal Navigation Feeds"
+    },
+    {
+      "alert_id": "ALT_JN_02_1795463193270",
+      "junction_id": "JN_02",
+      "junction_name": "Tech Corridor Outer Ring",
+      "alert_level": "CRITICAL",
+      "speed_kmh": 11.7,
+      "vehicle_count": 88,
+      "occupancy_pct": 88.1,
+      "action": "Adaptive Signal Extension (+45s) | Dispatch Traffic Patrol | VMS Broadcast"
+    },
+    {
+      "alert_id": "ALT_JN_04_1795463193737",
+      "junction_id": "JN_04",
+      "junction_name": "Harbor Industrial Boulevard",
+      "alert_level": "CRITICAL",
+      "speed_kmh": 17.9,
+      "vehicle_count": 129,
+      "occupancy_pct": 83.7,
+      "action": "Adaptive Signal Extension (+45s) | Dispatch Traffic Patrol | VMS Broadcast"
+    },
+    {
+      "alert_id": "ALT_JN_02_1795463193829",
+      "junction_id": "JN_02",
+      "junction_name": "Tech Corridor Outer Ring",
+      "alert_level": "CRITICAL",
+      "speed_kmh": 11.2,
+      "vehicle_count": 122,
+      "occupancy_pct": 90.6,
+      "action": "Adaptive Signal Extension (+45s) | Dispatch Traffic Patrol | VMS Broadcast"
+    }
+  ]
+}
