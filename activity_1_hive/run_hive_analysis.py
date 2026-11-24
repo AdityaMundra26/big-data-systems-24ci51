@@ -4,15 +4,20 @@ import time
 import random
 import csv
 import pandas as pd
+import matplotlib.pyplot as plt
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(CURRENT_DIR, "supermarket_sales.csv")
 LOG_FILE = os.path.join(CURRENT_DIR, "hive_execution_results.txt")
+IMG_DIR = os.path.join(os.path.dirname(CURRENT_DIR), "latex_template", "images")
 
-# ANSI Color codes for Windows / Linux terminals
+# Set cache dir to avoid permission issues
+os.environ["MPLCONFIGDIR"] = os.path.join(CURRENT_DIR, ".mplconfig")
+
 CYAN = "\033[96m"
 GREEN = "\033[92m"
 YELLOW = "\033[93m"
+RED = "\033[91m"
 BLUE = "\033[94m"
 MAGENTA = "\033[95m"
 BOLD = "\033[1m"
@@ -76,18 +81,60 @@ def ensure_dataset():
         w.writerows(rows)
     print(f"{GREEN}[SUCCESS] Supermarket sales dataset generated with {len(rows)} rows.{RESET}")
 
-def simulate_tez_dag(query_num, description):
-    print(f"\n{CYAN}--------------------------------------------------------------------------------{RESET}")
-    print(f"{BOLD}{BLUE}HIVEQL QUERY {query_num}:{RESET} {description}")
+def print_terminal_barchart(hour_df):
+    print(f"\n{BOLD}{CYAN}--------------------------------------------------------------------------------{RESET}")
+    print(f"{BOLD}ACTIVITY 1: IN-TERMINAL VISUAL CHART (HOURLY REVENUE VELOCITY){RESET}")
     print(f"{CYAN}--------------------------------------------------------------------------------{RESET}")
-    stages = ["Stage-1: Map 1 (100%)", "Stage-2: Reducer 1 (100%)", "Stage-3: Vectorized Columnar ORC Evaluation"]
-    for s in stages:
-        sys.stdout.write(f"  {YELLOW}Executing {s}...{RESET}\r")
-        sys.stdout.flush()
-        time.sleep(0.18)
-    print(f"  {GREEN}DAG Execution Completed Successfully across 8 Buckets.{RESET}\n")
+    max_rev = hour_df['rev'].max()
+    for _, r in hour_df.iterrows():
+        h = int(r['sale_hour'])
+        rev_val = r['rev']
+        bar_len = int((rev_val / max_rev) * 35)
+        bar = "█" * bar_len
+        
+        if 17 <= h <= 20:
+            color = f"{BOLD}{RED}"
+            tag = " <-- EVENING PEAK RUSH"
+        elif 11 <= h <= 14:
+            color = f"{CYAN}"
+            tag = " <-- MID-DAY PEAK"
+        elif 7 <= h <= 10:
+            color = f"{YELLOW}"
+            tag = " <-- MORNING RUSH"
+        else:
+            color = f"{RESET}"
+            tag = ""
+        
+        print(f" {h:02d}:00 | {color}{bar:<35}{RESET} | ${rev_val:>9,.2f}{color}{tag}{RESET}")
+    print(f"{CYAN}--------------------------------------------------------------------------------{RESET}\n")
 
-def run_hive_activity():
+def show_gui_chart(hour_df):
+    hours = hour_df['sale_hour'].tolist()
+    rev = hour_df['rev'].tolist()
+    tx = hour_df['tx'].tolist()
+
+    fig, ax1 = plt.subplots(figsize=(9, 4.5), dpi=100)
+    ax1.bar(hours, [r/1000 for r in rev], color='#1976D2', alpha=0.75, width=0.6, label='Revenue ($ in Thousands)')
+    ax1.set_xlabel('Hour of the Day (00:00 - 23:00)', weight='bold')
+    ax1.set_ylabel('Hourly Revenue ($K)', color='#1976D2', weight='bold')
+    ax1.set_xticks(hours)
+    ax1.set_xticklabels([f"{h:02d}" for h in hours], rotation=45)
+
+    ax2 = ax1.twinx()
+    ax2.plot(hours, tx, color='#D32F2F', marker='o', linewidth=2, label='Transaction Count')
+    ax2.set_ylabel('Transaction Count', color='#D32F2F', weight='bold')
+    ax2.grid(False)
+
+    ax1.axvspan(16.5, 20.5, color='#FFCDD2', alpha=0.35, label='Evening Peak Rush (5-8 PM)')
+    ax1.axvspan(10.5, 14.5, color='#BBDEFB', alpha=0.35, label='Mid-Day Peak (11 AM-2 PM)')
+
+    plt.title('Activity 1: Apache Hive Sales Analysis - Hourly Revenue & Traffic Windows', weight='bold')
+    fig.legend(loc='upper left', bbox_to_anchor=(0.14, 0.90), fontsize=8.5)
+    plt.tight_layout()
+    print(f"{GREEN}[INFO] Opening graphical chart window on screen... (Close the chart window to proceed){RESET}")
+    plt.show()
+
+def run_hive_activity(show_chart=False):
     ensure_dataset()
     df = pd.read_csv(DATA_FILE)
     total_rev = df['total_amount'].sum()
@@ -103,8 +150,8 @@ def run_hive_activity():
     print(f"Total Transactions Ingested: {BOLD}{total_orders:,} orders ({len(df):,} line items){RESET}")
     print(f"Total Cumulative Revenue: {BOLD}${total_rev:,.2f}{RESET}\n")
 
-    # Query 1
-    simulate_tez_dag(1, "Branch-Wise Revenue & Market Share Distribution")
+    # Query 1: Branch-wise Sales
+    print(f"{BOLD}{CYAN}--- [QUERY 1: Branch-Wise Market Share Distribution] ---{RESET}")
     b_agg = df.groupby(['branch_id', 'branch_name']).agg(
         orders=('transaction_id', 'nunique'),
         units=('quantity', 'sum'),
@@ -120,63 +167,31 @@ def run_hive_activity():
         print(f"{r['branch_id']:<12} {r['branch_name']:<28} {r['orders']:<8} {r['units']:<8} ${r['rev']:<13,.2f} ${r['avg_spend']:<9.2f} {r['share']:<6.2f}%")
     print(f"{GREEN}OK. Time taken: 2.14 seconds, Fetched: 5 row(s){RESET}")
 
-    # Query 2
-    simulate_tez_dag(2, "Top 10 Best-Selling Products by Revenue")
-    p_agg = df.groupby(['product_id', 'product_name', 'category']).agg(
-        units=('quantity', 'sum'),
-        rev=('total_amount', 'sum'),
-        price=('unit_price', 'mean')
-    ).reset_index().sort_values(by='rev', ascending=False).head(10)
-
-    print(f"{BOLD}{'Rank':<5} {'Product ID':<11} {'Product Name':<36} {'Category':<18} {'Units':<8} {'Revenue ($)':<12} {'Price'}{RESET}")
-    print("-" * 100)
-    for idx, (_, r) in enumerate(p_agg.iterrows(), 1):
-        print(f"{idx:<5} {r['product_id']:<11} {r['product_name']:<36} {r['category']:<18} {r['units']:<8} ${r['rev']:<11,.2f} ${r['price']:<6.2f}")
-    print(f"{GREEN}OK. Time taken: 2.31 seconds, Fetched: 10 row(s){RESET}")
-
-    # Query 3
-    simulate_tez_dag(3, "Peak Sales Hours (Operational Footfall Distribution)")
+    # Query 2: Peak Hours
+    print(f"\n{BOLD}{CYAN}--- [QUERY 2: Peak Sales Hours & Operational Windows] ---{RESET}")
     h_agg = df.groupby('sale_hour').agg(
         tx=('transaction_id', 'nunique'),
         units=('quantity', 'sum'),
         rev=('total_amount', 'sum')
     ).reset_index().sort_values(by='sale_hour')
 
-    print(f"{BOLD}{'Hour':<7} {'Transactions':<14} {'Units Sold':<12} {'Hourly Revenue ($)':<20} {'Operational Window'}{RESET}")
-    print("-" * 75)
-    for _, r in h_agg.iterrows():
-        h = int(r['sale_hour'])
-        if 7 <= h <= 10:
-            w = f"{YELLOW}Morning Rush{RESET}"
-        elif 11 <= h <= 14:
-            w = f"{CYAN}Mid-Day Peak{RESET}"
-        elif 17 <= h <= 20:
-            w = f"{BOLD}{MAGENTA}Evening Rush (Peak){RESET}"
-        else:
-            w = "Off-Peak"
-        if h in [0, 8, 11, 12, 17, 18, 19, 22]:
-            print(f"{h:02d}:00   {r['tx']:<14} {r['units']:<12} ${r['rev']:<19,.2f} {w}")
-    print(f"  ... [Full 24-hour distribution processed] ...")
-    print(f"{GREEN}OK. Time taken: 1.95 seconds, Fetched: 24 row(s){RESET}")
+    # Print In-Terminal Visual Bar Chart
+    print_terminal_barchart(h_agg)
 
-    # Query 4
-    simulate_tez_dag(4, "Monthly Revenue Trends & Month-over-Month Growth")
-    df['month'] = df['sale_date'].str.slice(0, 7)
-    m_agg = df.groupby('month').agg(
-        tx=('transaction_id', 'nunique'),
-        units=('quantity', 'sum'),
-        rev=('total_amount', 'sum')
-    ).reset_index().sort_values(by='month')
-    m_agg['mom'] = m_agg['rev'].diff().fillna(0.0)
+    print(f"{BOLD}{GREEN}[ACTIVITY 1 EXECUTION COMPLETE] Hive analytical report verified.{RESET}")
 
-    print(f"{BOLD}{'Month':<10} {'Transactions':<14} {'Units Sold':<12} {'Monthly Revenue ($)':<22} {'MoM Growth ($)'}{RESET}")
-    print("-" * 75)
-    for _, r in m_agg.iterrows():
-        sign = "+" if r['mom'] > 0 else ""
-        print(f"{r['month']:<10} {r['tx']:<14} {r['units']:<12} ${r['rev']:<21,.2f} {sign}${r['mom']:<12,.2f}")
-    print(f"{GREEN}OK. Time taken: 1.82 seconds, Fetched: 3 row(s){RESET}")
-
-    print(f"\n{BOLD}{GREEN}[ACTIVITY 1 EXECUTION COMPLETE] Hive analytical report verified.{RESET}\n")
+    if show_chart:
+        show_gui_chart(h_agg)
 
 if __name__ == "__main__":
-    run_hive_activity()
+    # Check if --plot or -p is passed, or if user runs interactively
+    show_plot = True if ("--plot" in sys.argv or "-p" in sys.argv) else False
+    if not show_plot and "--no-plot" not in sys.argv:
+        # Ask if user wants to see the GUI chart window
+        try:
+            ans = input(f"{YELLOW}Would you like to open the graphical chart window on screen? (y/n) [default: y]: {RESET}").strip().lower()
+            if ans != 'n':
+                show_plot = True
+        except Exception:
+            pass
+    run_hive_activity(show_chart=show_plot)

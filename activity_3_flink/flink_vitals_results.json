@@ -1,86 +1,78 @@
 {
-  "alerts": [
-    {
-      "time": "01:11:14",
-      "patient": "PAT_101",
-      "anomalies": [
-        "HYPOXEMIA (88.1%)"
-      ]
-    }
-  ],
+  "alerts": [],
   "window_summaries": [
     {
-      "window": "01:10:40-01:11:00",
-      "patient_id": "PAT_105",
-      "status": "\u001b[92mSTABLE\u001b[0m"
-    },
-    {
-      "window": "01:11:00-01:11:20",
+      "window": "15:15:20-15:15:40",
       "patient_id": "PAT_103",
       "status": "\u001b[92mSTABLE\u001b[0m"
     },
     {
-      "window": "01:11:00-01:11:20",
-      "patient_id": "PAT_105",
+      "window": "15:15:20-15:15:40",
+      "patient_id": "PAT_104",
       "status": "\u001b[92mSTABLE\u001b[0m"
     },
     {
-      "window": "01:11:00-01:11:20",
+      "window": "15:15:20-15:15:40",
       "patient_id": "PAT_102",
       "status": "\u001b[92mSTABLE\u001b[0m"
     },
     {
-      "window": "01:11:00-01:11:20",
-      "patient_id": "PAT_104",
-      "status": "\u001b[92mSTABLE\u001b[0m"
-    },
-    {
-      "window": "01:11:00-01:11:20",
-      "patient_id": "PAT_101",
-      "status": "\u001b[93mABNORMAL OBSERVED\u001b[0m"
-    },
-    {
-      "window": "01:11:20-01:11:40",
-      "patient_id": "PAT_101",
-      "status": "\u001b[92mSTABLE\u001b[0m"
-    },
-    {
-      "window": "01:11:20-01:11:40",
+      "window": "15:15:20-15:15:40",
       "patient_id": "PAT_105",
       "status": "\u001b[92mSTABLE\u001b[0m"
     },
     {
-      "window": "01:11:20-01:11:40",
-      "patient_id": "PAT_104",
-      "status": "\u001b[92mSTABLE\u001b[0m"
-    },
-    {
-      "window": "01:11:20-01:11:40",
+      "window": "15:15:40-15:16:00",
       "patient_id": "PAT_102",
       "status": "\u001b[92mSTABLE\u001b[0m"
     },
     {
-      "window": "01:11:20-01:11:40",
-      "patient_id": "PAT_103",
+      "window": "15:15:40-15:16:00",
+      "patient_id": "PAT_101",
       "status": "\u001b[92mSTABLE\u001b[0m"
     },
     {
-      "window": "01:11:40-01:12:00",
+      "window": "15:15:40-15:16:00",
       "patient_id": "PAT_104",
       "status": "\u001b[92mSTABLE\u001b[0m"
     },
     {
-      "window": "01:11:40-01:12:00",
-      "patient_id": "PAT_103",
-      "status": "\u001b[92mSTABLE\u001b[0m"
-    },
-    {
-      "window": "01:11:40-01:12:00",
+      "window": "15:15:40-15:16:00",
       "patient_id": "PAT_105",
       "status": "\u001b[92mSTABLE\u001b[0m"
     },
     {
-      "window": "01:11:40-01:12:00",
+      "window": "15:15:40-15:16:00",
+      "patient_id": "PAT_103",
+      "status": "\u001b[92mSTABLE\u001b[0m"
+    },
+    {
+      "window": "15:16:00-15:16:20",
+      "patient_id": "PAT_103",
+      "status": "\u001b[92mSTABLE\u001b[0m"
+    },
+    {
+      "window": "15:16:00-15:16:20",
+      "patient_id": "PAT_105",
+      "status": "\u001b[92mSTABLE\u001b[0m"
+    },
+    {
+      "window": "15:16:00-15:16:20",
+      "patient_id": "PAT_104",
+      "status": "\u001b[92mSTABLE\u001b[0m"
+    },
+    {
+      "window": "15:16:00-15:16:20",
+      "patient_id": "PAT_102",
+      "status": "\u001b[92mSTABLE\u001b[0m"
+    },
+    {
+      "window": "15:16:00-15:16:20",
+      "patient_id": "PAT_101",
+      "status": "\u001b[92mSTABLE\u001b[0m"
+    },
+    {
+      "window": "15:16:20-15:16:40",
       "patient_id": "PAT_102",
       "status": "\u001b[92mSTABLE\u001b[0m"
     }
