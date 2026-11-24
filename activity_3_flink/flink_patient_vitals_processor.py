@@ -385,14 +385,14 @@ def run_flink_activity(auto_open_browser=True):
             pass
 
     print(f"\n{BOLD}{GREEN}[ACTIVITY 3 EXECUTION COMPLETE] Flink streaming processor verified.{RESET}")
-    print(f"{YELLOW}Press [Ctrl+C] or close terminal to stop the local dashboard server.{RESET}\n")
+    print(f"{YELLOW}Local dashboard active at {url}. Press [Ctrl+C] or close this window to stop the server.{RESET}\n")
 
-    # Keep server running briefly if called standalone, or return
-    if "--daemon" in sys.argv:
+    if "--no-wait" not in sys.argv:
         try:
-            while True: time.sleep(1)
+            while True:
+                time.sleep(1)
         except KeyboardInterrupt:
-            pass
+            print(f"\n{GREEN}Flink dashboard server stopped.{RESET}")
 
 if __name__ == "__main__":
     auto_open = False if "--no-browser" in sys.argv else True
