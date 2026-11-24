@@ -1,7 +1,8 @@
 # DEPARTMENT OF COMPUTER SCIENCE & ENGINEERING  
 ## (ARTIFICIAL INTELLIGENCE & MACHINE LEARNING)  
 ### BIG DATA SYSTEMS (24CI51) — SELF-LEARNING ACTIVITY REPORT  
-**Academic Year:** 2024–2025 | **Total Marks:** 20 (5 Activities × 4 Marks)  
+**Student Name:** Aditya Mundra | **USN:** 1MS24CI009  
+**Course Code:** 24CI51 -- Big Data Systems | **Academic Year:** 2025–2026 | **Total Marks:** 20 (5 Activities × 4 Marks)  
 
 ---
 
