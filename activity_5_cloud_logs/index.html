@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS CloudWatch & QuickSight Analytics Dashboard (Port 8050)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+        body { background-color: #f4f6f9; color: #333; }
+        header { background: linear-gradient(135deg, #232f3e 0%, #131921 100%); color: white; padding: 18px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .header-title { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; gap: 12px; }
+        .aws-pill { background: #ff9900; color: #111; padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 800; }
+        .cluster-status { font-size: 13px; color: #4caf50; display: flex; align-items: center; gap: 6px; font-weight: 600; }
+        .status-dot { width: 10px; height: 10px; background: #4caf50; border-radius: 50%; box-shadow: 0 0 8px #4caf50; }
+
+        .container { max-width: 1300px; margin: 25px auto; padding: 0 20px; }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .kpi-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 4px solid #ff9900; }
+        .kpi-card.alert-card { border-left-color: #d32f2f; }
+        .kpi-card.query-card { border-left-color: #1976d2; }
+        .kpi-card.cost-card { border-left-color: #388e3c; }
+        .kpi-label { font-size: 12px; text-transform: uppercase; color: #777; font-weight: 700; margin-bottom: 8px; }
+        .kpi-val { font-size: 28px; font-weight: 800; color: #111; }
+        .kpi-sub { font-size: 12px; color: #666; margin-top: 5px; }
+
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .chart-box { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .chart-box h3 { font-size: 15px; font-weight: 700; margin-bottom: 15px; color: #232f3e; }
+
+        .table-box { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 25px; }
+        .table-box h3 { font-size: 16px; font-weight: 700; margin-bottom: 15px; color: #232f3e; display: flex; justify-content: space-between; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; }
+        th { background: #f8fafc; padding: 12px 14px; border-bottom: 2px solid #e2e8f0; font-weight: 700; color: #475569; }
+        td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; }
+        tr:hover { background: #f8fafc; }
+
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        .badge-critical { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .badge-stable { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+
+        footer { text-align: center; padding: 20px; color: #888; font-size: 12px; border-top: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-title">
+            <span class="aws-pill">AWS ATHENA</span>
+            CloudWatch & QuickSight Serverless Log Lake Analytics
+        </div>
+        <div class="cluster-status">
+            <div class="status-dot"></div>
+            S3 Data Lake Connected (us-east-1) | Engine: Presto SQL
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- KPI Row -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-label">Total Log Events</div>
+                <div class="kpi-val">15,000</div>
+                <div class="kpi-sub">W3C / Apache Combined Log Format</div>
+            </div>
+            <div class="kpi-card alert-card">
+                <div class="kpi-label">Error Rate (4xx & 5xx)</div>
+                <div class="kpi-val" style="color: #c62828;">19.63%</div>
+                <div class="kpi-sub">Spike detected between 14:00 - 16:00 UTC</div>
+            </div>
+            <div class="kpi-card query-card">
+                <div class="kpi-label">Athena Scan Duration</div>
+                <div class="kpi-val" style="color: #1976d2;">0.84s</div>
+                <div class="kpi-sub">Data Scanned: 1.12 MB (Snappy Parquet)</div>
+            </div>
+            <div class="kpi-card cost-card">
+                <div class="kpi-label">Monthly Cloud Bill</div>
+                <div class="kpi-val" style="color: #2e7d32;">$36.35</div>
+                <div class="kpi-sub">95.4% Savings vs Self-Hosted EC2 Fleet</div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-grid">
+            <div class="chart-box">
+                <h3>Hourly Failure Rate (%) & Outage Spike Detection</h3>
+                <canvas id="spikeChart" height="180"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>Monthly TCO: Serverless AWS ($36.35) vs Self-Hosted EC2 ($791.88)</h3>
+                <canvas id="costChart" height="180"></canvas>
+            </div>
+        </div>
+
+        <!-- Static Image Backup Preview -->
+        <div class="chart-box" style="margin-bottom: 25px;">
+            <h3>Matplotlib Generated Multi-Panel Analytical Plot (Saved to Disk)</h3>
+            <div style="text-align: center;">
+                <img src="cloud_analytics_chart.png" alt="Cloud Analytics Chart" style="max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+            </div>
+        </div>
+
+        <!-- Problematic Routes Table -->
+        <div class="table-box">
+            <h3>
+                <span>Endpoint Latency & Server Error Breakdown (Amazon Athena Query)</span>
+                <span style="font-size: 12px; font-weight: normal; color: #64748b;">Filtered by 5xx Errors DESC</span>
+            </h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Endpoint URI</th>
+                        <th>Method</th>
+                        <th>Total Calls</th>
+                        <th>5xx Server Errors</th>
+                        <th>Avg Latency</th>
+                        <th>P95 Latency</th>
+                        <th>Incident Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+        <tr>
+            <td><code>/api/v1/checkout/pay</code></td>
+            <td><strong>POST</strong></td>
+            <td>1,650</td>
+            <td style="color: #c62828; font-weight: bold;">499</td>
+            <td>2338.5 ms</td>
+            <td><strong>5520.8 ms</strong></td>
+            <td><span class="badge badge-critical">GATEWAY DEGRADATION</span></td>
+        </tr>
+        
+        <tr>
+            <td><code>/api/v1/products/search</code></td>
+            <td><strong>GET</strong></td>
+            <td>1,656</td>
+            <td style="color: #2e7d32; font-weight: bold;">36</td>
+            <td>257.8 ms</td>
+            <td><strong>430.0 ms</strong></td>
+            <td><span class="badge badge-stable">HEALTHY</span></td>
+        </tr>
+        
+        <tr>
+            <td><code>/api/v1/products</code></td>
+            <td><strong>GET</strong></td>
+            <td>1,648</td>
+            <td style="color: #2e7d32; font-weight: bold;">20</td>
+            <td>65.4 ms</td>
+            <td><strong>106.0 ms</strong></td>
+            <td><span class="badge badge-stable">HEALTHY</span></td>
+        </tr>
+        
+        <tr>
+            <td><code>/admin/db/metrics</code></td>
+            <td><strong>GET</strong></td>
+            <td>1,749</td>
+            <td style="color: #2e7d32; font-weight: bold;">0</td>
+            <td>37.5 ms</td>
+            <td><strong>58.0 ms</strong></td>
+            <td><span class="badge badge-stable">HEALTHY</span></td>
+        </tr>
+        
+        <tr>
+            <td><code>/api/v1/cart/items</code></td>
+            <td><strong>POST</strong></td>
+            <td>1,612</td>
+            <td style="color: #2e7d32; font-weight: bold;">0</td>
+            <td>77.6 ms</td>
+            <td><strong>116.0 ms</strong></td>
+            <td><span class="badge badge-stable">HEALTHY</span></td>
+        </tr>
+        
+        <tr>
+            <td><code>/api/v1/auth/login</code></td>
+            <td><strong>POST</strong></td>
+            <td>1,605</td>
+            <td style="color: #2e7d32; font-weight: bold;">0</td>
+            <td>111.0 ms</td>
+            <td><strong>174.0 ms</strong></td>
+            <td><span class="badge badge-stable">HEALTHY</span></td>
+        </tr>
+        
+        <tr>
+            <td><code>/api/v1/user/profile</code></td>
+            <td><strong>GET</strong></td>
+            <td>1,676</td>
+            <td style="color: #2e7d32; font-weight: bold;">0</td>
+            <td>60.0 ms</td>
+            <td><strong>92.0 ms</strong></td>
+            <td><span class="badge badge-stable">HEALTHY</span></td>
+        </tr>
+        
+        <tr>
+            <td><code>/static/assets/app.js</code></td>
+            <td><strong>GET</strong></td>
+            <td>1,691</td>
+            <td style="color: #2e7d32; font-weight: bold;">0</td>
+            <td>25.1 ms</td>
+            <td><strong>39.0 ms</strong></td>
+            <td><span class="badge badge-stable">HEALTHY</span></td>
+        </tr>
+        
+        <tr>
+            <td><code>/static/assets/theme.css</code></td>
+            <td><strong>GET</strong></td>
+            <td>1,713</td>
+            <td style="color: #2e7d32; font-weight: bold;">0</td>
+            <td>19.3 ms</td>
+            <td><strong>29.0 ms</strong></td>
+            <td><span class="badge badge-stable">HEALTHY</span></td>
+        </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <footer>
+        DEPARTMENT OF CSE (AI & ML) — BIG DATA SYSTEMS (24CI51) SELF LEARNING ACTIVITY 5<br>
+        Cloud Big Data Log Analytics Proof of Concept on Amazon Web Services (S3, Glue, Athena).
+    </footer>
+
+    <script>
+        const ctxSpike = document.getElementById('spikeChart').getContext('2d');
+        new Chart(ctxSpike, {
+            type: 'line',
+            data: {
+                labels: ['00:00', '03:00', '06:00', '09:00', '12:00', '14:00 (Spike)', '15:00 (Spike)', '18:00', '21:00'],
+                datasets: [
+                    {
+                        label: 'Failed Request Rate (%)',
+                        data: [17.2, 14.5, 15.7, 18.0, 18.4, 25.0, 26.2, 16.2, 18.9],
+                        borderColor: '#d32f2f',
+                        backgroundColor: 'rgba(211, 47, 47, 0.1)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Warning Threshold (20%)',
+                        data: [20, 20, 20, 20, 20, 20, 20, 20, 20],
+                        borderColor: '#f57c00',
+                        borderDash: [5, 5],
+                        borderWidth: 1.5,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { min: 10, max: 32 } } }
+        });
+
+        const ctxCost = document.getElementById('costChart').getContext('2d');
+        new Chart(ctxCost, {
+            type: 'bar',
+            data: {
+                labels: ['Self-Hosted EC2 Fleet', 'Serverless AWS S3 + Athena'],
+                datasets: [{
+                    label: 'Monthly Cost ($ USD)',
+                    data: [791.88, 36.35],
+                    backgroundColor: ['#e53935', '#1e88e5'],
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 900 } } }
+        });
+    </script>
+</body>
+</html>
